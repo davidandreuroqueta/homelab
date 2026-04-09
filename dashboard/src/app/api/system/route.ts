@@ -83,44 +83,28 @@ export async function GET() {
 
   const loadAvg = os.loadavg();
 
-  // Network interfaces — try reading host network from /host-proc
-  let interfaces: { name: string; addresses: string[] }[] = [];
-  try {
-    const raw = await fs.readFile('/host-proc/net/fib_trie', 'utf-8');
-    // Parse host IPs from fib_trie (fallback approach)
-    const ips = new Set<string>();
-    const lines = raw.split('\n');
-    for (let i = 0; i < lines.length; i++) {
-      const match = lines[i].match(/^\s+\|-- (\d+\.\d+\.\d+\.\d+)$/);
-      if (match && lines[i + 1]?.includes('/32 host LOCAL')) {
-        const ip = match[1];
-        if (ip !== '127.0.0.1' && !ip.startsWith('172.')) ips.add(ip);
-      }
-    }
-    if (ips.size > 0) {
-      interfaces = [{ name: 'host', addresses: Array.from(ips) }];
-    }
-  } catch { /* fallback to container interfaces */ }
+  // Network interfaces — use env vars for host IPs, fallback to container interfaces
+  const interfaces: { name: string; addresses: string[] }[] = [];
 
-  if (interfaces.length === 0) {
-    const networkInterfaces = os.networkInterfaces();
-    interfaces = Object.entries(networkInterfaces)
-      .filter(([name]) => !name.startsWith('lo'))
-      .map(([name, addrs]) => ({
-        name,
-        addresses: (addrs || [])
-          .filter((a) => a.family === 'IPv4')
-          .map((a) => a.address),
-      }))
-      .filter((n) => n.addresses.length > 0);
+  if (process.env.HOST_LAN_IP) {
+    interfaces.push({ name: 'LAN', addresses: [process.env.HOST_LAN_IP] });
+  }
+  if (process.env.HOST_TAILSCALE_IP) {
+    interfaces.push({ name: 'Tailscale', addresses: [process.env.HOST_TAILSCALE_IP] });
   }
 
-  // Try to read host hostname
-  let hostname = os.hostname();
-  try {
-    const hostHostname = await fs.readFile('/host-proc/sys/kernel/hostname', 'utf-8');
-    if (hostHostname.trim()) hostname = hostHostname.trim();
-  } catch { /* use container hostname */ }
+  // Also add container's own interface
+  const networkInterfaces = os.networkInterfaces();
+  for (const [name, addrs] of Object.entries(networkInterfaces)) {
+    if (name.startsWith('lo')) continue;
+    const ipv4 = (addrs || []).filter((a) => a.family === 'IPv4').map((a) => a.address);
+    if (ipv4.length > 0) {
+      interfaces.push({ name: `Docker (${name})`, addresses: ipv4 });
+    }
+  }
+
+  // Use host hostname from env or container hostname
+  const hostname = process.env.HOST_HOSTNAME || os.hostname();
 
   return NextResponse.json({
     hostname,

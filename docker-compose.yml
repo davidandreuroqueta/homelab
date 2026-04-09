@@ -13,9 +13,13 @@ services:
       - /var/run/docker.sock:/var/run/docker.sock:ro
       - /home/claude/vault:/vault:ro
       - /proc:/host-proc:ro
+    hostname: homelab
     environment:
       - NODE_ENV=production
       - VAULT_PATH=/vault
+      - HOST_HOSTNAME=homelab
+      - HOST_LAN_IP=192.168.1.142
+      - HOST_TAILSCALE_IP=100.97.53.99
     networks:
       - homelab
 
