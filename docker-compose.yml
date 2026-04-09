@@ -1,0 +1,22 @@
+services:
+  dashboard:
+    build:
+      context: ./dashboard
+      dockerfile: Dockerfile
+    container_name: homelab-dashboard
+    restart: unless-stopped
+    ports:
+      - "127.0.0.1:3000:3000"
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock:ro
+      - /home/claude/vault:/vault:ro
+      - /proc:/host-proc:ro
+    environment:
+      - NODE_ENV=production
+      - VAULT_PATH=/vault
+    networks:
+      - homelab
+
+networks:
+  homelab:
+    driver: bridge

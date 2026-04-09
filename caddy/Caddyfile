@@ -1,0 +1,12 @@
+# Homelab Caddyfile
+# Serves dashboard on :80 and proxies to services
+
+:80 {
+	# Dashboard (main homepage)
+	reverse_proxy localhost:3000
+
+	# Health check endpoint
+	handle /health {
+		respond "OK" 200
+	}
+}
