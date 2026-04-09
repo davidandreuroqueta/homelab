@@ -5,6 +5,8 @@ services:
       dockerfile: Dockerfile
     container_name: homelab-dashboard
     restart: unless-stopped
+    group_add:
+      - "988"  # docker group GID for socket access
     ports:
       - "127.0.0.1:3000:3000"
     volumes:

@@ -83,20 +83,47 @@ export async function GET() {
 
   const loadAvg = os.loadavg();
 
-  // Network interfaces
-  const networkInterfaces = os.networkInterfaces();
-  const interfaces = Object.entries(networkInterfaces)
-    .filter(([name]) => !name.startsWith('lo'))
-    .map(([name, addrs]) => ({
-      name,
-      addresses: (addrs || [])
-        .filter((a) => a.family === 'IPv4')
-        .map((a) => a.address),
-    }))
-    .filter((n) => n.addresses.length > 0);
+  // Network interfaces — try reading host network from /host-proc
+  let interfaces: { name: string; addresses: string[] }[] = [];
+  try {
+    const raw = await fs.readFile('/host-proc/net/fib_trie', 'utf-8');
+    // Parse host IPs from fib_trie (fallback approach)
+    const ips = new Set<string>();
+    const lines = raw.split('\n');
+    for (let i = 0; i < lines.length; i++) {
+      const match = lines[i].match(/^\s+\|-- (\d+\.\d+\.\d+\.\d+)$/);
+      if (match && lines[i + 1]?.includes('/32 host LOCAL')) {
+        const ip = match[1];
+        if (ip !== '127.0.0.1' && !ip.startsWith('172.')) ips.add(ip);
+      }
+    }
+    if (ips.size > 0) {
+      interfaces = [{ name: 'host', addresses: Array.from(ips) }];
+    }
+  } catch { /* fallback to container interfaces */ }
+
+  if (interfaces.length === 0) {
+    const networkInterfaces = os.networkInterfaces();
+    interfaces = Object.entries(networkInterfaces)
+      .filter(([name]) => !name.startsWith('lo'))
+      .map(([name, addrs]) => ({
+        name,
+        addresses: (addrs || [])
+          .filter((a) => a.family === 'IPv4')
+          .map((a) => a.address),
+      }))
+      .filter((n) => n.addresses.length > 0);
+  }
+
+  // Try to read host hostname
+  let hostname = os.hostname();
+  try {
+    const hostHostname = await fs.readFile('/host-proc/sys/kernel/hostname', 'utf-8');
+    if (hostHostname.trim()) hostname = hostHostname.trim();
+  } catch { /* use container hostname */ }
 
   return NextResponse.json({
-    hostname: os.hostname(),
+    hostname,
     cpu: {
       cores: cpus.length,
       model: cpus[0]?.model || 'Unknown',
