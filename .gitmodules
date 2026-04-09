@@ -1,0 +1,3 @@
+[submodule "services/tubepod"]
+	path = services/tubepod
+	url = https://github.com/davidandreuroqueta/tubepod.git
