@@ -16,14 +16,28 @@ import { Button } from '@/components/ui/button';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { Skeleton } from '@/components/ui/skeleton';
 
+interface PortMapping {
+  private: number;
+  public?: number;
+  type: string;
+}
+
 interface DockerContainer {
   id: string;
   name: string;
   image: string;
   state: string;
   status: string;
-  ports: string;
+  ports: PortMapping[];
   created: string;
+}
+
+function formatPorts(ports: PortMapping[]): string {
+  if (!ports || ports.length === 0) return 'None';
+  return ports
+    .filter((p) => p.public)
+    .map((p) => `${p.public}:${p.private}/${p.type}`)
+    .join(', ') || 'None';
 }
 
 interface DockerData {
@@ -123,9 +137,9 @@ function ContainerRow({
             >
               {container.status}
             </div>
-            {container.ports && (
+            {container.ports?.length > 0 && (
               <div className="text-xs text-muted-foreground font-mono">
-                {container.ports}
+                {formatPorts(container.ports)}
               </div>
             )}
           </div>
@@ -165,7 +179,7 @@ function ContainerRow({
             <div>
               <span className="text-muted-foreground">Ports</span>
               <div className="font-mono text-foreground/80">
-                {container.ports || 'None'}
+                {formatPorts(container.ports)}
               </div>
             </div>
           </div>
