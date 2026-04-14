@@ -37,7 +37,7 @@ export async function parseRssFeed(xml: string): Promise<RssItem[]> {
       title: item.title ?? '(untitled)',
       description: item.contentSnippet ?? item.content,
       link: item.link,
-      guid: item.guid ?? item.id ?? item.link ?? item.title ?? String(pub),
+      guid: item.guid ?? (item as any).id ?? item.link ?? item.title ?? String(pub),
       publishedAt: Math.floor(pub / 1000),
       audioUrl,
       durationSeconds: parseDuration((item as any).itunesDuration),

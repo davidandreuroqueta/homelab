@@ -1,10 +1,8 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { spawn } from 'node:child_process';
-import path from 'node:path';
 import { getDb } from '@/lib/db/client';
 import { episodes, generationRuns } from '@/lib/db/schema';
 import { eq } from 'drizzle-orm';
-import { scriptsDir } from '@/lib/linkedin/paths';
+import { spawnScript } from '@/lib/linkedin/spawn-script';
 
 export const dynamic = 'force-dynamic';
 
@@ -22,11 +20,7 @@ export async function POST(_req: NextRequest, { params }: { params: Promise<{ id
     status: 'running',
   }).returning().all();
 
-  const script = path.join(scriptsDir(), 'process-episode.mjs');
-  const child = spawn('node', [script, String(run.id), String(episodeId)], {
-    detached: true, stdio: 'ignore', env: process.env,
-  });
-  child.unref();
+  spawnScript('process-episode.mjs', [String(run.id), String(episodeId)]);
 
   return NextResponse.json({ runId: run.id, episodeId });
 }

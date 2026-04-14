@@ -45,19 +45,19 @@ export async function loadPrompt(name: string, vars: Record<string, string> = {}
 export async function runClaude(prompt: string, opts: ClaudeRunOptions): Promise<ClaudeRunResult> {
   const args = buildClaudeArgs(opts);
   const token = claudeToken();
-  const env: Record<string, string> = {
+  const env = {
     ...process.env,
     ...(token ? { CLAUDE_CODE_OAUTH_TOKEN: token } : {}),
     ...opts.extraEnv,
   };
   // Never pass ANTHROPIC_API_KEY — would override OAuth
-  delete env.ANTHROPIC_API_KEY;
+  delete (env as Record<string, unknown>).ANTHROPIC_API_KEY;
 
   const start = Date.now();
   return new Promise<ClaudeRunResult>((resolve) => {
     const child = spawn(claudeBinary(), [...args, prompt], {
       cwd: opts.cwd,
-      env,
+      env: env as NodeJS.ProcessEnv,
       stdio: ['ignore', 'pipe', 'pipe'],
     });
     let stdout = '';

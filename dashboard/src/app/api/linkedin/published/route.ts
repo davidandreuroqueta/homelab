@@ -1,10 +1,8 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { spawn } from 'node:child_process';
-import path from 'node:path';
 import { getDb } from '@/lib/db/client';
 import { published, drafts } from '@/lib/db/schema';
 import { desc, eq } from 'drizzle-orm';
-import { scriptsDir } from '@/lib/linkedin/paths';
+import { spawnScript } from '@/lib/linkedin/spawn-script';
 
 export const dynamic = 'force-dynamic';
 
@@ -36,11 +34,7 @@ export async function POST(req: NextRequest) {
   }
 
   // Fire voice profile update in background
-  const script = path.join(scriptsDir(), 'update-voice-profile.mjs');
-  const child = spawn('node', [script, String(row.id)], {
-    detached: true, stdio: 'ignore', env: process.env,
-  });
-  child.unref();
+  spawnScript('update-voice-profile.mjs', [String(row.id)]);
 
   return NextResponse.json({ published: row });
 }
