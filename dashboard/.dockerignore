@@ -1,5 +1,8 @@
 node_modules
 .next
 .git
-*.md
+README.md
+CLAUDE.md
+AGENTS.md
 .env*.local
+data/
