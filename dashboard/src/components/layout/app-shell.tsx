@@ -11,6 +11,7 @@ import {
   Activity,
   Menu,
   Circle,
+  MessageSquare,
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { Button } from '@/components/ui/button';
@@ -26,6 +27,7 @@ const navItems = [
   { href: '/services', label: 'Services', icon: Server },
   { href: '/docker', label: 'Docker', icon: Container },
   { href: '/vault', label: 'Vault', icon: BookOpen },
+  { href: '/linkedin', label: 'LinkedIn', icon: MessageSquare },
   { href: '/system', label: 'System', icon: Activity },
 ];
 
