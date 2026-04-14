@@ -13,6 +13,8 @@ services:
       - /var/run/docker.sock:/var/run/docker.sock:ro
       - /home/claude/vault:/vault:ro
       - /proc:/host-proc:ro
+      # LinkedIn Command Center data
+      - /home/claude/homelab-data/linkedin:/app/data
     hostname: homelab
     environment:
       - NODE_ENV=production
@@ -20,6 +22,15 @@ services:
       - HOST_HOSTNAME=homelab
       - HOST_LAN_IP=192.168.1.142
       - HOST_TAILSCALE_IP=100.97.53.99
+      # LinkedIn Command Center
+      - LINKEDIN_DB_PATH=/app/data/linkedin.db
+      - LINKEDIN_MIGRATIONS_FOLDER=/app/src/lib/db/migrations
+      - VOICE_PROFILE_PATH=/app/data/voice-profile.md
+      - LINKEDIN_SCRIPTS_DIR=/app/scripts
+      - LINKEDIN_PROMPTS_DIR=/app/prompts
+      - CLAUDE_CODE_OAUTH_TOKEN=${CLAUDE_CODE_OAUTH_TOKEN}
+      - OPENAI_API_KEY=${OPENAI_API_KEY}
+      - CRON_SECRET=${CRON_SECRET}
     networks:
       - homelab
 
