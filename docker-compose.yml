@@ -15,6 +15,8 @@ services:
       - /proc:/host-proc:ro
       # LinkedIn Command Center data
       - /home/claude/homelab-data/linkedin:/app/data
+      # Claude CLI credentials (reuse host login)
+      - /home/claude/.claude:/home/nextjs/.claude:ro
     hostname: homelab
     environment:
       - NODE_ENV=production
