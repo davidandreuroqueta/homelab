@@ -4,7 +4,7 @@ WORKDIR /app
 # build-base + python3 needed for better-sqlite3 native compilation
 RUN apk add --no-cache build-base python3
 COPY package.json package-lock.json ./
-RUN npm ci
+RUN npm install
 
 # Stage 2: Build
 FROM node:22-alpine AS builder
