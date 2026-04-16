@@ -31,7 +31,7 @@ services:
       - VOICE_PROFILE_PATH=/app/data/voice-profile.md
       - LINKEDIN_SCRIPTS_DIR=/app/scripts
       - LINKEDIN_PROMPTS_DIR=/app/prompts
-      - CLAUDE_CODE_OAUTH_TOKEN=${CLAUDE_CODE_OAUTH_TOKEN}
+      # CLAUDE_CODE_OAUTH_TOKEN not needed — credentials mounted from host
       - OPENAI_API_KEY=${OPENAI_API_KEY}
       - CRON_SECRET=${CRON_SECRET}
     networks:
