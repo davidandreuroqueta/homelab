@@ -17,6 +17,7 @@ services:
       - /home/claude/homelab-data/linkedin:/app/data
       # Claude CLI credentials (reuse host login)
       - /home/claude/.claude:/home/nextjs/.claude
+      - /home/claude/.claude.json:/home/nextjs/.claude.json
     hostname: homelab
     environment:
       - NODE_ENV=production
