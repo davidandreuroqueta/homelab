@@ -15,7 +15,15 @@ export default async function DraftDetailPage({ params }: { params: Promise<{ id
   const [draft] = db.select().from(drafts).where(eq(drafts.id, Number(id))).all();
   if (!draft) notFound();
 
-  const sources = JSON.parse(draft.sources) as { type: string; url: string; title: string }[];
+  // Handle both formats: array of objects [{type,url,title}] and array of plain URL strings
+  const rawSources = JSON.parse(draft.sources);
+  const sources: { type: string; url: string; title: string }[] = Array.isArray(rawSources)
+    ? rawSources.map((s: unknown) =>
+        typeof s === 'string'
+          ? { type: 'web', url: s, title: new URL(s).hostname }
+          : (s as { type: string; url: string; title: string })
+      )
+    : [];
 
   return (
     <div className="space-y-6">

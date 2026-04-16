@@ -1,5 +1,5 @@
 import Link from 'next/link';
-import { Star, Clock, Tag } from 'lucide-react';
+import { Star, Clock, Tag, ExternalLink } from 'lucide-react';
 import { Badge } from '@/components/ui/badge';
 import type { Draft } from '@/lib/db/schema';
 
@@ -15,6 +15,8 @@ function formatAge(ts: number): string {
 
 export function DraftCard({ draft }: { draft: Draft }) {
   const preview = draft.content.slice(0, 240) + (draft.content.length > 240 ? '…' : '');
+  const sourcesArr = (() => { try { const p = JSON.parse(draft.sources); return Array.isArray(p) ? p : []; } catch { return []; } })();
+  const sourceCount = sourcesArr.length;
   return (
     <Link
       href={`/linkedin/drafts/${draft.id}`}
@@ -30,7 +32,14 @@ export function DraftCard({ draft }: { draft: Draft }) {
       </div>
       <p className="text-sm font-semibold text-foreground leading-snug">{draft.hook}</p>
       <p className="text-xs text-muted-foreground leading-relaxed line-clamp-4">{preview}</p>
-      <div className="mt-auto pt-1 text-[10px] text-muted-foreground">{draft.content.length} chars</div>
+      <div className="mt-auto flex items-center gap-3 pt-1 text-[10px] text-muted-foreground">
+        <span>{draft.content.length} chars</span>
+        {sourceCount > 0 && (
+          <span className="flex items-center gap-1">
+            <ExternalLink className="size-3" /> {sourceCount} fuente{sourceCount !== 1 ? 's' : ''}
+          </span>
+        )}
+      </div>
     </Link>
   );
 }
