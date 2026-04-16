@@ -103,7 +103,7 @@ try {
   const args = [
     '-p', '--output-format', 'json',
     '--permission-mode', 'dontAsk',
-    '--allowedTools', 'Read,Bash(sqlite3 *)',
+    '--allowedTools', 'Read,Write,Bash',
     '--max-turns', '15',
     '--no-session-persistence',
     prompt,

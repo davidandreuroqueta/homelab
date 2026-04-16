@@ -32,8 +32,8 @@ const args = [
   '-p',
   '--output-format', 'json',
   '--permission-mode', 'dontAsk',
-  '--allowedTools', 'Read,Write,Bash(sqlite3 *),WebSearch,WebFetch',
-  '--max-turns', '25',
+  '--allowedTools', 'Read,Write,Bash,WebSearch,WebFetch',
+  '--max-turns', '30',
   '--no-session-persistence',
   prompt,
 ];
