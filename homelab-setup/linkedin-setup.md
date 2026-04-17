@@ -1,72 +1,106 @@
-# LinkedIn Command Center — One-time Setup on Homelab
+# LinkedIn Command Center — Setup Guide
 
-Run these steps on the homelab server (`ssh homelab-claude`).
+## Prerequisites
+- Claude CLI logged in on the homelab host (`claude` user must have valid session in `~/.claude/`)
+- OpenAI API key (for Whisper podcast transcription — optional, only needed for episodes feature)
 
-## 1. Generate Claude Code OAuth token
+## First-time setup
 
-On your local machine (where you're logged in to Claude Max):
-```
-claude setup-token
-```
-Copy the token output.
+Run these steps on the homelab server.
 
-## 2. Set up env file on homelab
+### 1. Create data directory and env file
 
-```
-mkdir -p ~/homelab-data/linkedin
+```bash
+mkdir -p ~/homelab-data/linkedin ~/homelab/logs
+
 cat > ~/homelab/.env <<EOF
-CLAUDE_CODE_OAUTH_TOKEN=<paste token here>
-OPENAI_API_KEY=<your openai key, for whisper>
+OPENAI_API_KEY=<your openai key, for whisper — leave empty if not using episodes>
 CRON_SECRET=$(openssl rand -hex 32)
 EOF
 chmod 600 ~/homelab/.env
 ```
 
-## 3. Initialize DB directory
+### 2. Ensure Claude CLI is authenticated
 
-```
-mkdir -p ~/homelab-data/linkedin
-touch ~/homelab-data/linkedin/voice-profile.md
+The dashboard container mounts the host's `~/.claude/` and `~/.claude.json` to reuse
+the host's Claude session. Verify it's valid:
+
+```bash
+claude --version  # should show a version
+claude auth status  # should show authenticated
 ```
 
-## 4. Build + deploy
+If not logged in, run `claude` interactively and complete the login flow.
 
-```
+Note: OAuth tokens expire every few hours. The CLI refreshes them automatically,
+which is why the credentials are mounted read-write into the container.
+
+### 3. Build and deploy
+
+```bash
 cd ~/homelab
 git pull
 docker compose up -d --build
 ```
 
-The entrypoint will automatically run DB migrations on first start.
+The entrypoint automatically runs SQLite migrations on startup.
 
-## 5. Seed default sources
+### 4. Seed default sources
 
-```
-curl -X POST -H "X-Cron-Secret: $(grep CRON_SECRET ~/homelab/.env | cut -d= -f2)" http://localhost:3000/api/linkedin/setup/seed
-```
-
-## 6. Install cron entry
-
-Edit crontab (`crontab -e`) for user `claude`:
-```
-# LinkedIn drafts — daily 7am
-0 7 * * * curl -fsS -X POST -H "X-Cron-Secret: $(grep CRON_SECRET ~/homelab/.env | cut -d= -f2)" http://localhost:3000/api/linkedin/runs > /home/claude/homelab/logs/linkedin-cron.log 2>&1
+```bash
+source ~/homelab/.env
+curl -X POST -H "X-Cron-Secret: $CRON_SECRET" http://localhost:3000/api/linkedin/setup/seed
 ```
 
-Ensure the logs dir exists:
-```
+Expected: `{"inserted":13}` (12 RSS feeds + 1 podcast).
+
+### 5. Install daily cron
+
+```bash
 mkdir -p ~/homelab/logs
+(crontab -l 2>/dev/null; echo '0 7 * * * source ~/homelab/.env && curl -fsS -X POST -H "X-Cron-Secret: $CRON_SECRET" http://localhost:3000/api/linkedin/runs >> ~/homelab/logs/linkedin-cron.log 2>&1') | crontab -
 ```
 
-## 7. Verify
+### 6. Verify
 
-- Open `http://homelab:3000/linkedin` in a browser (or Tailscale)
+- Open `http://homelab:3000/linkedin` (or via Tailscale IP)
 - Should see "No hay drafts recientes" with a "Regenerar drafts" button
-- Click button -> should show "Claude investigando..." spinner -> drafts appear after a few minutes
+- Click the button — Claude will research and generate drafts (takes 30-40 min on Celeron N5095)
+- Drafts appear on the page when done
 
-## 8. Token rotation (yearly)
+## Daily usage
 
-Add to calendar: `claude setup-token` again, update `~/homelab/.env`, restart:
+1. **Morning**: open `/linkedin` — 7 drafts ready (generated at 7am by cron)
+2. **Pick one**: click a draft to see full content + sources
+3. **Verify sources**: click source links to fact-check
+4. **Refine**: click "Copiar contexto para Claude" — paste into a new Claude chat to iterate
+5. **Publish**: manually on LinkedIn
+6. **Register**: paste the final text + LinkedIn URL at `/linkedin/published`
+7. **Voice learns**: system automatically updates `voice-profile.md` after each registration
+
+## Troubleshooting
+
+### Drafts generation fails with 401
+Claude CLI token has expired. SSH into the homelab, run `claude` interactively to
+refresh the session, then try again.
+
+### Generation takes too long (>40 min)
+Normal on the Celeron N5095. The prompt does 5 web searches + generates 7 posts.
+Check that the process is alive: `docker exec homelab-dashboard ps aux | grep claude`
+
+### Episodes feature not working
+Needs `OPENAI_API_KEY` set in `~/homelab/.env`. Restart container after adding:
+`docker compose restart dashboard`
+
+### Database issues
+Migrations run automatically on container start. To check the DB:
+```bash
+docker exec homelab-dashboard sqlite3 /app/data/linkedin.db ".tables"
 ```
-docker compose restart dashboard
-```
+
+## Architecture notes
+
+- **No CLAUDE_CODE_OAUTH_TOKEN env var** — credentials are mounted from host filesystem
+- **No in-dashboard chat** — refinement happens in external Claude sessions via copy-paste
+- **SQLite + Drizzle ORM** — single file DB at `/home/claude/homelab-data/linkedin/linkedin.db`
+- **Prompts are versioned** in `dashboard/prompts/` — edit and redeploy to change behavior
