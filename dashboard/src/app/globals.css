@@ -54,6 +54,9 @@
 html {
   color-scheme: dark;
 }
+html:not(.dark) {
+  color-scheme: light;
+}
 
 :root {
   --background: oklch(1 0 0);
@@ -68,8 +71,8 @@ html {
   --secondary-foreground: oklch(0.205 0 0);
   --muted: oklch(0.97 0 0);
   --muted-foreground: oklch(0.556 0 0);
-  --accent: oklch(0.97 0 0);
-  --accent-foreground: oklch(0.205 0 0);
+  --accent: hsl(38, 92%, 45%);
+  --accent-foreground: hsl(0, 0%, 100%);
   --destructive: oklch(0.577 0.245 27.325);
   --border: oklch(0.922 0 0);
   --input: oklch(0.922 0 0);

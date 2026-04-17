@@ -18,10 +18,12 @@ function TreeItem({
   node,
   depth = 0,
   filter,
+  basePath = '/vault',
 }: {
   node: FileNode;
   depth?: number;
   filter: string;
+  basePath?: string;
 }) {
   const [open, setOpen] = useState(depth < 1);
   const pathname = usePathname();
@@ -78,6 +80,7 @@ function TreeItem({
                   node={child}
                   depth={depth + 1}
                   filter={filter}
+                  basePath={basePath}
                 />
               ))}
           </div>
@@ -86,9 +89,10 @@ function TreeItem({
     );
   }
 
-  if (!node.name.endsWith('.md')) return null;
+  const hasViewableExt = node.name.endsWith('.md') || node.name.endsWith('.txt');
+  if (!hasViewableExt) return null;
 
-  const filePath = `/vault/${node.path}`;
+  const filePath = `${basePath}/${node.path}`;
   const isActive = pathname === filePath;
 
   return (
@@ -103,7 +107,7 @@ function TreeItem({
       style={{ paddingLeft: `${depth * 12 + 8}px` }}
     >
       <FileText className="size-4 shrink-0" />
-      <span className="truncate">{node.name.replace(/\.md$/, '')}</span>
+      <span className="truncate">{node.name.replace(/\.(md|txt)$/, '')}</span>
     </Link>
   );
 }
@@ -111,9 +115,11 @@ function TreeItem({
 export function FileTree({
   tree,
   filter,
+  basePath = '/vault',
 }: {
   tree: FileNode[];
   filter: string;
+  basePath?: string;
 }) {
   if (!tree || tree.length === 0) {
     return (
@@ -131,7 +137,7 @@ export function FileTree({
           return a.name.localeCompare(b.name);
         })
         .map((node) => (
-          <TreeItem key={node.path} node={node} filter={filter} />
+          <TreeItem key={node.path} node={node} filter={filter} basePath={basePath} />
         ))}
     </div>
   );

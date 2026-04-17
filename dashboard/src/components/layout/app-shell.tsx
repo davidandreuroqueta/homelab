@@ -12,9 +12,13 @@ import {
   Menu,
   Circle,
   MessageSquare,
+  Plane,
+  Sun,
+  Moon,
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { Button } from '@/components/ui/button';
+import { useTheme } from '@/lib/hooks/use-theme';
 import {
   Sheet,
   SheetTrigger,
@@ -28,6 +32,7 @@ const navItems = [
   { href: '/docker', label: 'Docker', icon: Container },
   { href: '/vault', label: 'Vault', icon: BookOpen },
   { href: '/linkedin', label: 'LinkedIn', icon: MessageSquare },
+  { href: '/miami', label: 'Miami eMerge', icon: Plane },
   { href: '/system', label: 'System', icon: Activity },
 ];
 
@@ -77,6 +82,23 @@ function SidebarNav() {
   );
 }
 
+function ThemeToggle() {
+  const { theme, toggle } = useTheme();
+  return (
+    <button
+      onClick={toggle}
+      className="flex w-full items-center justify-between rounded-[10px] px-3 py-2 text-xs text-muted-foreground transition-colors hover:bg-muted hover:text-foreground"
+    >
+      <span>Theme</span>
+      {theme === 'dark' ? (
+        <Moon className="size-3.5" />
+      ) : (
+        <Sun className="size-3.5" />
+      )}
+    </button>
+  );
+}
+
 function SidebarFooter({ systemInfo }: { systemInfo: SystemInfo | null }) {
   const tsIface = systemInfo?.interfaces?.find(
     (i) => i.name.startsWith('tailscale') || i.name === 'tailscale0'
@@ -103,6 +125,9 @@ function SidebarFooter({ systemInfo }: { systemInfo: SystemInfo | null }) {
           <span>Tailscale</span>
           <span className="font-mono text-foreground/70">{tailscaleIp}</span>
         </div>
+      </div>
+      <div className="mt-3">
+        <ThemeToggle />
       </div>
     </div>
   );

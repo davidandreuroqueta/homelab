@@ -18,6 +18,8 @@ services:
       # Claude CLI credentials (reuse host login)
       - /home/claude/.claude:/home/nextjs/.claude
       - /home/claude/.claude.json:/home/nextjs/.claude.json
+      # Miami eMerge knowledge base
+      - /home/claude/miami-emerge:/miami-emerge:ro
     hostname: homelab
     environment:
       - NODE_ENV=production
@@ -34,6 +36,8 @@ services:
       # CLAUDE_CODE_OAUTH_TOKEN not needed — credentials mounted from host
       - OPENAI_API_KEY=${OPENAI_API_KEY}
       - CRON_SECRET=${CRON_SECRET}
+      # Miami eMerge knowledge base
+      - MIAMI_EMERGE_PATH=/miami-emerge
     networks:
       - homelab
 
